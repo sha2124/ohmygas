@@ -6,6 +6,7 @@ import ForecastBanner from "@/components/ForecastBanner";
 import Filters from "@/components/Filters";
 import PriceTable from "@/components/PriceTable";
 import PriceHistoryChart from "@/components/PriceHistoryChart";
+import SubscribeForm from "@/components/SubscribeForm";
 import { usePrices } from "@/lib/use-prices";
 import { FuelType } from "@/lib/types";
 
@@ -149,6 +150,9 @@ export default function Home() {
 
           {/* Price History Chart */}
           {history.length > 0 && <PriceHistoryChart history={history} />}
+
+          {/* Subscribe for alerts */}
+          <SubscribeForm />
 
           {/* Footer note */}
           <p className="pb-4 text-center text-xs text-gray-400">
