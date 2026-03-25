@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import ForecastBanner from "@/components/ForecastBanner";
 import Filters from "@/components/Filters";
 import PriceTable from "@/components/PriceTable";
+import PriceHistoryChart from "@/components/PriceHistoryChart";
 import { usePrices } from "@/lib/use-prices";
 import { FuelType } from "@/lib/types";
 
@@ -15,7 +16,8 @@ export default function Home() {
   const [brand, setBrand] = useState("all");
   const [fuelType, setFuelType] = useState<FuelType>("Diesel");
 
-  const { prices, meta, forecast, loading, isLive, staleWarning } = usePrices();
+  const { prices, meta, forecast, market, history, loading, isLive, staleWarning } =
+    usePrices();
 
   const filteredPrices = useMemo(() => {
     return prices.filter((p) => {
@@ -34,7 +36,6 @@ export default function Home() {
     return [...new Set(filtered.map((p) => p.city).filter(Boolean))] as string[];
   }, [prices, province]);
 
-  // Get brands available in the current location filter
   const availableBrands = useMemo(() => {
     let filtered = prices;
     if (region !== "all") filtered = filtered.filter((p) => p.region === region);
@@ -73,15 +74,43 @@ export default function Home() {
                 </span>
               </div>
               {staleWarning && (
-                <span className="text-xs text-brand-yellow">
-                  {staleWarning}
-                </span>
+                <span className="text-xs text-brand-yellow">{staleWarning}</span>
               )}
             </div>
           )}
 
           {/* Forecast Banner */}
           <ForecastBanner forecast={forecast} />
+
+          {/* Market indicators */}
+          {market && (market.crude || market.forex) && (
+            <div className="flex justify-center gap-4 rounded-lg bg-white px-4 py-2 text-xs shadow-sm">
+              {market.crude && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-gray-400">Crude Oil:</span>
+                  <span className="font-medium text-brand-charcoal">
+                    ${market.crude.price.toFixed(2)}
+                  </span>
+                  {market.crude.change !== null && (
+                    <span
+                      className={`font-medium ${market.crude.change > 0 ? "text-brand-red" : market.crude.change < 0 ? "text-brand-green" : "text-gray-400"}`}
+                    >
+                      {market.crude.change > 0 ? "+" : ""}
+                      {market.crude.change.toFixed(2)}
+                    </span>
+                  )}
+                </div>
+              )}
+              {market.forex && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-gray-400">USD/PHP:</span>
+                  <span className="font-medium text-brand-charcoal">
+                    ₱{market.forex.rate.toFixed(2)}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Filters */}
           <Filters
@@ -118,18 +147,12 @@ export default function Home() {
             <PriceTable prices={filteredPrices} />
           )}
 
-          {/* Market info */}
-          {meta && (
-            <div className="flex justify-center gap-4 text-xs text-gray-400">
-              <span>Dubai Crude: {meta.dubaiCrude}</span>
-              <span>USD/PHP: {meta.usdPhp}</span>
-            </div>
-          )}
+          {/* Price History Chart */}
+          {history.length > 0 && <PriceHistoryChart history={history} />}
 
           {/* Footer note */}
           <p className="pb-4 text-center text-xs text-gray-400">
             Prices are based on DOE advisories and may vary per station.
-            {meta?.nextAdj && ` Next adjustment: ${meta.nextAdj}.`}
           </p>
         </div>
       </main>
