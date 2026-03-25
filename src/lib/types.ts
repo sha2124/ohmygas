@@ -57,3 +57,11 @@ export const FUEL_TYPES: FuelType[] = [
   "Diesel",
   "Diesel Plus",
 ];
+
+export const FUEL_TYPE_LABELS: Record<FuelType, string> = {
+  "RON 91": "Regular",
+  "RON 95": "Premium",
+  "RON 97": "Super Premium",
+  "Diesel": "Diesel",
+  "Diesel Plus": "Diesel Plus",
+};

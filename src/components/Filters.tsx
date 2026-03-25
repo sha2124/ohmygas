@@ -1,33 +1,42 @@
 "use client";
 
 import { REGIONS } from "@/lib/regions";
-import { FUEL_TYPES, FuelType } from "@/lib/types";
+import { FUEL_TYPES, FUEL_TYPE_LABELS, BRANDS, FuelType } from "@/lib/types";
 
 interface FiltersProps {
   selectedRegion: string;
   selectedProvince: string;
   selectedCity: string;
+  selectedBrand: string;
   selectedFuelType: FuelType;
   onRegionChange: (region: string) => void;
   onProvinceChange: (province: string) => void;
   onCityChange: (city: string) => void;
+  onBrandChange: (brand: string) => void;
   onFuelTypeChange: (fuelType: FuelType) => void;
   availableCities: string[];
+  availableBrands: string[];
 }
 
 export default function Filters({
   selectedRegion,
   selectedProvince,
   selectedCity,
+  selectedBrand,
   selectedFuelType,
   onRegionChange,
   onProvinceChange,
   onCityChange,
+  onBrandChange,
   onFuelTypeChange,
   availableCities,
+  availableBrands,
 }: FiltersProps) {
   const region = REGIONS.find((r) => r.code === selectedRegion);
   const provinces = region?.provinces ?? [];
+
+  // Show brands in the order defined in BRANDS, filtered to what's available
+  const brandsToShow = BRANDS.filter((b) => availableBrands.includes(b));
 
   return (
     <div className="flex flex-col gap-3">
@@ -54,7 +63,7 @@ export default function Filters({
         </select>
       </div>
 
-      {/* Province selector (shows all provinces for selected region) */}
+      {/* Province selector */}
       {selectedRegion !== "all" && provinces.length > 0 && (
         <div>
           <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-gray-400">
@@ -78,7 +87,7 @@ export default function Filters({
         </div>
       )}
 
-      {/* City selector (shows when province is selected and cities exist) */}
+      {/* City selector */}
       {selectedProvince !== "all" && availableCities.length > 0 && (
         <div>
           <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-gray-400">
@@ -99,6 +108,25 @@ export default function Filters({
         </div>
       )}
 
+      {/* Brand filter */}
+      <div>
+        <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-gray-400">
+          Brand
+        </label>
+        <select
+          value={selectedBrand}
+          onChange={(e) => onBrandChange(e.target.value)}
+          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-brand-charcoal focus:border-brand-green focus:ring-1 focus:ring-brand-green focus:outline-none"
+        >
+          <option value="all">All Brands</option>
+          {brandsToShow.map((b) => (
+            <option key={b} value={b}>
+              {b}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {/* Fuel type tabs */}
       <div>
         <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-gray-400">
@@ -115,7 +143,7 @@ export default function Filters({
                   : "bg-white text-gray-600 hover:bg-gray-100"
               }`}
             >
-              {ft}
+              {FUEL_TYPE_LABELS[ft]}
             </button>
           ))}
         </div>
