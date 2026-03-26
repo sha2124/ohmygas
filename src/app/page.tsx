@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import ForecastBanner from "@/components/ForecastBanner";
 import Filters from "@/components/Filters";
 import PriceCards from "@/components/PriceCards";
+import PriceSummary from "@/components/PriceSummary";
 import PriceHistoryChart from "@/components/PriceHistoryChart";
 import SubscribeForm from "@/components/SubscribeForm";
 import SubmitPriceForm from "@/components/SubmitPriceForm";
@@ -211,7 +212,12 @@ export default function Home() {
             </div>
           )}
 
-          {/* Price Cards */}
+          {/* Price Summary — top-level averages */}
+          {!loading && filteredPrices.length > 0 && (
+            <PriceSummary prices={filteredPrices} />
+          )}
+
+          {/* Price Cards — brand list */}
           {loading ? <PriceTableSkeleton /> : <PriceCards prices={filteredPrices} />}
 
           {/* Price History Chart */}
