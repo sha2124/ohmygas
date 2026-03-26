@@ -58,14 +58,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Outlier detection: check if price is >15% away from recent submissions for this area
+    let flagged = false;
+    try {
+      const recent = await sql`
+        SELECT AVG(price) as avg_price, COUNT(*) as cnt
+        FROM crowd_prices
+        WHERE fuel_type = ${fuelType}
+          AND region = ${region}
+          AND expires_at > now()
+      `;
+      if (recent[0]?.cnt > 2) {
+        const avg = parseFloat(recent[0].avg_price);
+        const deviation = Math.abs(numPrice - avg) / avg;
+        if (deviation > 0.15) {
+          flagged = true;
+        }
+      }
+    } catch {
+      // Non-critical, proceed without flag
+    }
+
     // Insert the submission
     await sql`
-      INSERT INTO crowd_prices (brand, station, region, province, city, fuel_type, price, reported_by, ip_hash)
-      VALUES (${brand}, ${station || null}, ${region}, ${province}, ${city || null}, ${fuelType}, ${numPrice}, ${reportedBy?.slice(0, 30) || null}, ${ipHash})
+      INSERT INTO crowd_prices (brand, station, region, province, city, fuel_type, price, reported_by, ip_hash, flagged)
+      VALUES (${brand}, ${station || null}, ${region}, ${province}, ${city || null}, ${fuelType}, ${numPrice}, ${reportedBy?.slice(0, 30) || null}, ${ipHash}, ${flagged})
     `;
 
     return NextResponse.json({
-      message: "Salamat! Your price report has been submitted.",
+      message: flagged
+        ? "Salamat! Your price was submitted but flagged for review (unusual price)."
+        : "Salamat! Your price report has been submitted.",
     });
   } catch (error) {
     console.error("Submit price error:", error);

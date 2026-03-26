@@ -2,6 +2,7 @@
 
 :root {
   --green: #1B7A3D;
+  --green-dark: #146B38;
   --green-light: #e8f5ec;
   --yellow: #F5A623;
   --yellow-light: #fef9e7;
@@ -21,6 +22,7 @@
 
 @theme inline {
   --color-brand-green: var(--green);
+  --color-brand-green-dark: var(--green-dark);
   --color-brand-green-light: var(--green-light);
   --color-brand-yellow: var(--yellow);
   --color-brand-yellow-light: var(--yellow-light);
@@ -35,4 +37,18 @@ body {
   background: var(--gray-50);
   color: var(--charcoal);
   font-family: var(--font-sans, system-ui, sans-serif);
+}
+
+/* Smooth transitions for interactive elements */
+button, a, select, input {
+  transition: all 0.15s ease;
+}
+
+/* Custom scrollbar for mobile scroll areas */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#22915A"/>
+      <stop offset="100%" stop-color="#146B38"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded square background -->
+  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+  <!-- Fuel drop -->
+  <path d="M256 80c0 0-120 148-120 240a120 120 0 0 0 240 0c0-92-120-240-120-240z" fill="white" opacity="0.95"/>
+  <!-- Peso sign inside -->
+  <text x="256" y="348" font-family="system-ui,-apple-system,sans-serif" font-size="110" font-weight="800" fill="#1B7A3D" text-anchor="middle" dominant-baseline="auto">₱</text>
+</svg>

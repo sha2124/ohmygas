@@ -1,4 +1,5 @@
 import { FuelPrice, FuelType } from "../types";
+import { fetchWithTimeout, withRetry } from "./utils";
 
 interface FPBrandEntry {
   brand: string;
@@ -46,12 +47,17 @@ export async function scrapeFuelPricePH(): Promise<{
   const cacheBuster = Date.now();
   const url = `https://fuelprice.ph/js/fuelprice.js?v=${cacheBuster}`;
 
-  const response = await fetch(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (compatible; OhmyGas/1.0; fuel price comparison)",
-    },
-  });
+  const response = await withRetry(
+    () =>
+      fetchWithTimeout(url, {
+        timeoutMs: 12_000,
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (compatible; OhmyGas/1.0; fuel price comparison)",
+        },
+      }),
+    { label: "fuelprice.ph", maxRetries: 2 },
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to fetch fuelprice.js: ${response.status}`);

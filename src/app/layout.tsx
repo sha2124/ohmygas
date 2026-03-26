@@ -33,6 +33,13 @@ export const metadata: Metadata = {
     "presyo ng gasolina",
   ],
   manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -40,7 +47,8 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "OhmyGas — Fuel Prices PH",
-    description: "Compare gas & diesel prices across the Philippines. Para sa drayber, hindi lang sa Metro.",
+    description:
+      "Compare gas & diesel prices across the Philippines. Para sa drayber, hindi lang sa Metro.",
     url: "https://ohmygas.vercel.app",
     siteName: "OhmyGas",
     type: "website",
@@ -57,9 +65,6 @@ export default function RootLayout({
       lang="en-PH"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <head>
-        <link rel="apple-touch-icon" href="/icon-192.png" />
-      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

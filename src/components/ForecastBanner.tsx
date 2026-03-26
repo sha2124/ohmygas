@@ -11,10 +11,10 @@ export default function ForecastBanner({ forecast }: ForecastBannerProps) {
   const isDown = forecast.direction === "down";
 
   const bgColor = isUp
-    ? "bg-brand-red-light border-brand-red"
+    ? "bg-brand-red-light border-brand-red/30"
     : isDown
-      ? "bg-brand-green-light border-brand-green"
-      : "bg-brand-yellow-light border-brand-yellow";
+      ? "bg-brand-green-light border-brand-green/30"
+      : "bg-brand-yellow-light border-brand-yellow/30";
 
   const textColor = isUp
     ? "text-brand-red"
@@ -33,11 +33,11 @@ export default function ForecastBanner({ forecast }: ForecastBannerProps) {
 
   const formattedDate = new Date(forecast.effectiveDate).toLocaleDateString(
     "en-PH",
-    { weekday: "long", month: "short", day: "numeric" }
+    { weekday: "long", month: "short", day: "numeric" },
   );
 
   return (
-    <div className={`rounded-xl border-2 p-4 ${bgColor}`}>
+    <div className={`rounded-2xl border p-4 ${bgColor}`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className={`text-3xl font-bold ${textColor}`}>{arrow}</span>
@@ -48,23 +48,25 @@ export default function ForecastBanner({ forecast }: ForecastBannerProps) {
               >
                 {label}
               </span>
-              <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs text-gray-500">
-                {forecast.confidence} confidence
+              <span className="rounded-full bg-white/80 px-2 py-0.5 text-[10px] text-gray-500">
+                {forecast.confidence}
               </span>
             </div>
-            <p className="mt-0.5 text-lg font-bold text-brand-charcoal">
-              {isUp ? "+" : isDown ? "-" : ""}₱{forecast.estimatedChange.toFixed(2)}/L
+            <p className="mt-0.5 text-lg font-extrabold text-brand-charcoal">
+              {isUp ? "+" : isDown ? "-" : ""}₱
+              {forecast.estimatedChange.toFixed(2)}/L
             </p>
           </div>
         </div>
-        <div className="text-right text-sm text-gray-600">
+        <div className="text-right text-xs text-gray-600">
           <p>Expected</p>
-          <p className="font-medium">{formattedDate}</p>
+          <p className="font-semibold">{formattedDate}</p>
         </div>
       </div>
       <p className="mt-2 text-sm text-gray-700">{actionText}</p>
-      <p className="mt-2 rounded bg-white/50 px-2 py-1 text-[11px] text-gray-500">
-        Forecast based on crude oil &amp; forex trends. Actual DOE adjustments may differ.
+      <p className="mt-2 rounded-lg bg-white/50 px-2 py-1 text-[10px] text-gray-500">
+        Forecast based on crude oil &amp; forex trends. Actual DOE adjustments
+        may differ.
       </p>
     </div>
   );

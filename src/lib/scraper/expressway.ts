@@ -1,5 +1,6 @@
 import * as cheerio from "cheerio";
 import { FuelPrice, FuelType } from "../types";
+import { fetchWithTimeout, withRetry } from "./utils";
 
 const EXPRESSWAY_URL = "https://www.expressway.ph/fuel-prices";
 
@@ -32,12 +33,17 @@ export async function scrapeExpressway(): Promise<{
   prices: FuelPrice[];
   updated: string;
 }> {
-  const response = await fetch(EXPRESSWAY_URL, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (compatible; OhmyGas/1.0; fuel price comparison)",
-    },
-  });
+  const response = await withRetry(
+    () =>
+      fetchWithTimeout(EXPRESSWAY_URL, {
+        timeoutMs: 12_000,
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (compatible; OhmyGas/1.0; fuel price comparison)",
+        },
+      }),
+    { label: "expressway.ph", maxRetries: 2 },
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to fetch expressway.ph: ${response.status}`);

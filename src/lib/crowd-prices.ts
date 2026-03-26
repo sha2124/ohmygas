@@ -3,7 +3,8 @@ import { FuelPrice, FuelType } from "./types";
 
 /**
  * Fetch active community-submitted prices from Neon.
- * Only returns non-expired submissions (< 7 days old).
+ * Only returns non-expired, non-flagged submissions.
+ * Flagged prices need >= 3 votes to appear.
  */
 export async function fetchCrowdPrices(): Promise<FuelPrice[]> {
   const sql = getDb();
@@ -11,9 +12,10 @@ export async function fetchCrowdPrices(): Promise<FuelPrice[]> {
   const rows = await sql`
     SELECT DISTINCT ON (brand, region, province, city, fuel_type)
       id, brand, station, region, province, city, fuel_type,
-      price, reported_by, votes, created_at
+      price, reported_by, votes, flagged, created_at
     FROM crowd_prices
     WHERE expires_at > now()
+      AND (flagged = false OR votes >= 3)
     ORDER BY brand, region, province, city, fuel_type, votes DESC, created_at DESC
   `;
 
