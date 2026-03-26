@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import Header from "@/components/Header";
 import ForecastBanner from "@/components/ForecastBanner";
 import Filters from "@/components/Filters";
-import PriceTable from "@/components/PriceTable";
+import PriceCards from "@/components/PriceCards";
 import PriceHistoryChart from "@/components/PriceHistoryChart";
 import SubscribeForm from "@/components/SubscribeForm";
 import SubmitPriceForm from "@/components/SubmitPriceForm";
@@ -18,18 +18,19 @@ export default function Home() {
   const [province, setProvince] = useState("all");
   const [city, setCity] = useState("all");
   const [brand, setBrand] = useState("all");
-  const [fuelType, setFuelType] = useState<FuelType>("Diesel");
+  const [fuelType, setFuelType] = useState<FuelType | "all">("all");
 
-  const { prices, meta, forecast, market, history, loading, isLive, staleWarning, sources, communityCount, estimatedCount } =
+  const { prices, meta, forecast, market, history, loading, isLive, staleWarning, sources, communityCount, estimatedCount, refresh } =
     usePrices();
 
-  const hasFilters = region !== "all" || province !== "all" || city !== "all" || brand !== "all";
+  const hasFilters = region !== "all" || province !== "all" || city !== "all" || brand !== "all" || fuelType !== "all";
 
   function clearFilters() {
     setRegion("all");
     setProvince("all");
     setCity("all");
     setBrand("all");
+    setFuelType("all");
   }
 
   const filteredPrices = useMemo(() => {
@@ -38,7 +39,7 @@ export default function Home() {
       if (province !== "all" && p.province !== province) return false;
       if (city !== "all" && p.city !== city) return false;
       if (brand !== "all" && p.brand !== brand) return false;
-      if (p.fuelType !== fuelType) return false;
+      if (fuelType !== "all" && p.fuelType !== fuelType) return false;
       return true;
     });
   }, [prices, region, province, city, brand, fuelType]);
@@ -62,7 +63,13 @@ export default function Home() {
   }, [prices, region, province, city]);
 
   const updatedAt = meta?.updated
-    ? meta.updated
+    ? new Date(meta.updated).toLocaleDateString("en-PH", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      })
     : prices[0]?.updatedAt
       ? new Date(prices[0].updatedAt).toLocaleDateString("en-PH", {
           month: "short",
@@ -71,40 +78,53 @@ export default function Home() {
         })
       : "—";
 
+  // Count unique brands in filtered results
+  const brandCount = useMemo(() => {
+    return new Set(filteredPrices.map((p) => `${p.brand}|${p.city || ""}`)).size;
+  }, [filteredPrices]);
+
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
 
       <main className="mx-auto w-full max-w-lg flex-1 px-4 py-4" role="main">
         <div className="flex flex-col gap-4">
-          {/* Status indicator */}
+          {/* Status bar */}
           {!loading && (
-            <div className="flex flex-col items-center gap-1" role="status" aria-live="polite">
+            <div className="flex items-center justify-between" role="status" aria-live="polite">
               <div className="flex items-center gap-2">
                 <span
-                  className={`inline-block h-2 w-2 rounded-full ${isLive ? "bg-brand-green" : "bg-brand-yellow"}`}
+                  className={`inline-block h-2 w-2 rounded-full ${isLive ? "bg-brand-green animate-pulse" : "bg-brand-yellow"}`}
                   aria-hidden="true"
                 />
                 <span className="text-xs text-gray-500">
-                  {isLive
-                    ? `Live prices — ${meta?.week ?? ""}`
-                    : "Estimated prices — live data source updating"}
+                  {isLive ? "Live" : "Estimated"}
                 </span>
-              </div>
-              {staleWarning && (
-                <span className="text-xs text-yellow-600">{staleWarning}</span>
-              )}
-              <div className="flex flex-wrap items-center justify-center gap-2 text-[11px] text-gray-400">
                 {sources.length > 0 && (
-                  <span>Sources: {sources.join(", ")}</span>
-                )}
-                {communityCount > 0 && (
-                  <span className="rounded-full bg-brand-yellow-light px-2 py-0.5 text-yellow-700">
-                    {communityCount} community report{communityCount !== 1 ? "s" : ""}
+                  <span className="text-[11px] text-gray-300">
+                    via {sources.join(", ")}
                   </span>
                 )}
               </div>
+              <div className="flex items-center gap-2">
+                {communityCount > 0 && (
+                  <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] text-amber-600">
+                    {communityCount} community
+                  </span>
+                )}
+                <button
+                  onClick={refresh}
+                  className="flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-500 hover:bg-gray-200 transition-colors"
+                  title="Refresh prices"
+                >
+                  ↻ Refresh
+                </button>
+              </div>
             </div>
+          )}
+
+          {staleWarning && (
+            <p className="text-center text-xs text-yellow-600">{staleWarning}</p>
           )}
 
           {/* Forecast Banner */}
@@ -117,13 +137,13 @@ export default function Home() {
             <div className="flex justify-center gap-4 rounded-lg bg-white px-4 py-2 text-xs shadow-sm">
               {market.crude && (
                 <div className="flex items-center gap-1.5">
-                  <span className="text-gray-400">Crude Oil:</span>
-                  <span className="font-medium text-brand-charcoal">
+                  <span className="text-gray-400">Crude:</span>
+                  <span className="font-semibold text-brand-charcoal">
                     ${market.crude.price.toFixed(2)}
                   </span>
                   {market.crude.change !== null && (
                     <span
-                      className={`font-medium ${market.crude.change > 0 ? "text-brand-red" : market.crude.change < 0 ? "text-brand-green" : "text-gray-400"}`}
+                      className={`font-semibold ${market.crude.change > 0 ? "text-brand-red" : market.crude.change < 0 ? "text-brand-green" : "text-gray-400"}`}
                     >
                       {market.crude.change > 0 ? "+" : ""}
                       {market.crude.change.toFixed(2)}
@@ -134,7 +154,7 @@ export default function Home() {
               {market.forex && (
                 <div className="flex items-center gap-1.5">
                   <span className="text-gray-400">USD/PHP:</span>
-                  <span className="font-medium text-brand-charcoal">
+                  <span className="font-semibold text-brand-charcoal">
                     ₱{market.forex.rate.toFixed(2)}
                   </span>
                 </div>
@@ -148,53 +168,51 @@ export default function Home() {
             selectedProvince={province}
             selectedCity={city}
             selectedBrand={brand}
-            selectedFuelType={fuelType}
+            selectedFuelType={fuelType as FuelType}
             onRegionChange={setRegion}
             onProvinceChange={setProvince}
             onCityChange={setCity}
             onBrandChange={setBrand}
-            onFuelTypeChange={setFuelType}
+            onFuelTypeChange={(ft) => setFuelType(ft)}
             availableCities={availableCities}
             availableBrands={availableBrands}
+            showAllFuelOption
           />
 
-          {/* Clear filters */}
-          {hasFilters && (
-            <button
-              onClick={clearFilters}
-              className="self-start text-xs font-medium text-brand-green hover:underline"
-            >
-              Clear all filters
-            </button>
-          )}
-
-          {/* Results header */}
+          {/* Clear filters + results count */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <p className="text-sm text-gray-500">
-                {loading
-                  ? "Loading..."
-                  : `${filteredPrices.length} result${filteredPrices.length !== 1 ? "s" : ""}`}
+                {loading ? "Loading..." : `${brandCount} brand${brandCount !== 1 ? "s" : ""}`}
               </p>
               {!loading && filteredEstimatedCount > 0 && (
                 <span className="text-[11px] text-gray-400">
-                  ({filteredEstimatedCount} estimated)
+                  ({Math.round((filteredEstimatedCount / (filteredPrices.length || 1)) * 100)}% estimated)
                 </span>
               )}
             </div>
-            <p className="text-xs text-gray-400">Updated {updatedAt}</p>
+            <div className="flex items-center gap-3">
+              {hasFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="text-xs font-medium text-brand-green hover:underline"
+                >
+                  Clear filters
+                </button>
+              )}
+              <p className="text-xs text-gray-400">{updatedAt}</p>
+            </div>
           </div>
 
           {/* Estimated data notice */}
           {!loading && filteredEstimatedCount > 0 && filteredEstimatedCount === filteredPrices.length && (
-            <div className="rounded-lg bg-yellow-50 border border-yellow-200 px-3 py-2 text-xs text-yellow-700">
-              These are estimated prices based on regional averages. Help make them accurate —{" "}
-              <span className="font-medium">report a price</span> you see at a station near you.
+            <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">
+              Estimated prices based on regional averages. Help make them accurate — report a price you see at a station near you.
             </div>
           )}
 
-          {/* Price Table */}
-          {loading ? <PriceTableSkeleton /> : <PriceTable prices={filteredPrices} />}
+          {/* Price Cards */}
+          {loading ? <PriceTableSkeleton /> : <PriceCards prices={filteredPrices} />}
 
           {/* Price History Chart */}
           {history.length > 0 && <PriceHistoryChart history={history} />}

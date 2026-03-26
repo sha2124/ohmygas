@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { FuelPrice, ForecastData } from "./types";
 import { SAMPLE_PRICES, SAMPLE_FORECAST } from "./sample-data";
 
@@ -28,9 +28,11 @@ interface PriceData {
   sources: string[];
   communityCount: number;
   estimatedCount: number;
+  refresh: () => void;
 }
 
 export function usePrices(): PriceData {
+  const [refreshKey, setRefreshKey] = useState(0);
   const [liveNCR, setLiveNCR] = useState<FuelPrice[]>([]);
   const [meta, setMeta] = useState<PriceData["meta"]>(null);
   const [forecast, setForecast] = useState<ForecastData>(SAMPLE_FORECAST);
@@ -42,6 +44,11 @@ export function usePrices(): PriceData {
   const [staleWarning, setStaleWarning] = useState<string | null>(null);
   const [sources, setSources] = useState<string[]>([]);
   const [communityCount, setCommunityCount] = useState(0);
+
+  const refresh = useCallback(() => {
+    setLoading(true);
+    setRefreshKey((k) => k + 1);
+  }, []);
 
   useEffect(() => {
     async function fetchAll() {
@@ -89,7 +96,7 @@ export function usePrices(): PriceData {
       setLoading(false);
     }
     fetchAll();
-  }, []);
+  }, [refreshKey]);
 
   // Provincial prices are estimated (sample data) — always tagged
   const provincialPrices = SAMPLE_PRICES.filter((p) => p.region !== "NCR").map(
@@ -109,5 +116,5 @@ export function usePrices(): PriceData {
     estimatedCount = prices.length;
   }
 
-  return { prices, meta, forecast, market, history, loading, error, isLive, staleWarning, sources, communityCount, estimatedCount };
+  return { prices, meta, forecast, market, history, loading, error, isLive, staleWarning, sources, communityCount, estimatedCount, refresh };
 }

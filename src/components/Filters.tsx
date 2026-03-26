@@ -16,6 +16,7 @@ interface FiltersProps {
   onFuelTypeChange: (fuelType: FuelType) => void;
   availableCities: string[];
   availableBrands: string[];
+  showAllFuelOption?: boolean;
 }
 
 export default function Filters({
@@ -31,6 +32,7 @@ export default function Filters({
   onFuelTypeChange,
   availableCities,
   availableBrands,
+  showAllFuelOption,
 }: FiltersProps) {
   const region = REGIONS.find((r) => r.code === selectedRegion);
   const provinces = region?.provinces ?? [];
@@ -133,6 +135,20 @@ export default function Filters({
           Fuel Type
         </label>
         <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap" role="radiogroup" aria-label="Fuel type">
+          {showAllFuelOption && (
+            <button
+              onClick={() => onFuelTypeChange("all" as FuelType)}
+              role="radio"
+              aria-checked={selectedFuelType === ("all" as FuelType)}
+              className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                selectedFuelType === ("all" as FuelType)
+                  ? "bg-brand-green text-white"
+                  : "bg-white text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              All
+            </button>
+          )}
           {FUEL_TYPES.map((ft) => (
             <button
               key={ft}
