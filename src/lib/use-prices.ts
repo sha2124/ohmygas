@@ -25,6 +25,8 @@ interface PriceData {
   error: string | null;
   isLive: boolean;
   staleWarning: string | null;
+  sources: string[];
+  communityCount: number;
 }
 
 export function usePrices(): PriceData {
@@ -37,6 +39,8 @@ export function usePrices(): PriceData {
   const [error, setError] = useState<string | null>(null);
   const [isLive, setIsLive] = useState(false);
   const [staleWarning, setStaleWarning] = useState<string | null>(null);
+  const [sources, setSources] = useState<string[]>([]);
+  const [communityCount, setCommunityCount] = useState(0);
 
   useEffect(() => {
     async function fetchAll() {
@@ -64,6 +68,8 @@ export function usePrices(): PriceData {
           }
           setMeta(data.meta);
         }
+        if (data.sources) setSources(data.sources);
+        if (data.communityCount != null) setCommunityCount(data.communityCount);
       } else {
         setError("Failed to fetch prices");
       }
@@ -81,11 +87,13 @@ export function usePrices(): PriceData {
     fetchAll();
   }, []);
 
-  const provincialPrices = SAMPLE_PRICES.filter((p) => p.region !== "NCR");
+  const provincialPrices = SAMPLE_PRICES.filter((p) => p.region !== "NCR").map(
+    (p) => ({ ...p, source: "scraped" as const })
+  );
   const prices =
     isLive && liveNCR.length > 0
       ? [...liveNCR, ...provincialPrices]
-      : SAMPLE_PRICES;
+      : SAMPLE_PRICES.map((p) => ({ ...p, source: "scraped" as const }));
 
-  return { prices, meta, forecast, market, history, loading, error, isLive, staleWarning };
+  return { prices, meta, forecast, market, history, loading, error, isLive, staleWarning, sources, communityCount };
 }

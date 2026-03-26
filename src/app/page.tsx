@@ -7,6 +7,7 @@ import Filters from "@/components/Filters";
 import PriceTable from "@/components/PriceTable";
 import PriceHistoryChart from "@/components/PriceHistoryChart";
 import SubscribeForm from "@/components/SubscribeForm";
+import SubmitPriceForm from "@/components/SubmitPriceForm";
 import { usePrices } from "@/lib/use-prices";
 import { FuelType } from "@/lib/types";
 
@@ -17,7 +18,7 @@ export default function Home() {
   const [brand, setBrand] = useState("all");
   const [fuelType, setFuelType] = useState<FuelType>("Diesel");
 
-  const { prices, meta, forecast, market, history, loading, isLive, staleWarning } =
+  const { prices, meta, forecast, market, history, loading, isLive, staleWarning, sources, communityCount } =
     usePrices();
 
   const filteredPrices = useMemo(() => {
@@ -77,6 +78,17 @@ export default function Home() {
               {staleWarning && (
                 <span className="text-xs text-brand-yellow">{staleWarning}</span>
               )}
+              {/* Source + community count */}
+              <div className="flex items-center gap-3 text-[10px] text-gray-400">
+                {sources.length > 0 && (
+                  <span>Sources: {sources.join(", ")}</span>
+                )}
+                {communityCount > 0 && (
+                  <span className="rounded-full bg-brand-yellow-light px-2 py-0.5 text-brand-yellow">
+                    {communityCount} community report{communityCount !== 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
             </div>
           )}
 
@@ -151,12 +163,15 @@ export default function Home() {
           {/* Price History Chart */}
           {history.length > 0 && <PriceHistoryChart history={history} />}
 
+          {/* Submit a community price */}
+          <SubmitPriceForm />
+
           {/* Subscribe for alerts */}
           <SubscribeForm />
 
           {/* Footer note */}
           <p className="pb-4 text-center text-xs text-gray-400">
-            Prices are based on DOE advisories and may vary per station.
+            Prices are based on DOE advisories and community reports. May vary per station.
           </p>
         </div>
       </main>

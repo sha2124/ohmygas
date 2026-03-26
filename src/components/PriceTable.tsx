@@ -6,6 +6,20 @@ interface PriceTableProps {
   prices: FuelPrice[];
 }
 
+function SourceBadge({ source, votes }: { source?: string; votes?: number }) {
+  if (source === "community") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-brand-yellow-light px-1.5 py-0.5 text-[10px] font-medium text-brand-yellow">
+        Community
+        {votes && votes > 1 && (
+          <span className="text-brand-yellow/60">+{votes - 1}</span>
+        )}
+      </span>
+    );
+  }
+  return null;
+}
+
 export default function PriceTable({ prices }: PriceTableProps) {
   if (prices.length === 0) {
     return (
@@ -37,7 +51,7 @@ export default function PriceTable({ prices }: PriceTableProps) {
 
             return (
               <tr
-                key={`${p.brand}-${p.fuelType}-${i}`}
+                key={`${p.brand}-${p.fuelType}-${p.source}-${i}`}
                 className={`border-b border-gray-50 ${isCheapest ? "bg-brand-green-light" : ""}`}
               >
                 <td className="px-4 py-3">
@@ -51,11 +65,14 @@ export default function PriceTable({ prices }: PriceTableProps) {
                       </span>
                     )}
                   </div>
-                  {(p.city || p.station) && (
-                    <p className="text-xs text-gray-400">
-                      {[p.city, p.station].filter(Boolean).join(" · ")}
-                    </p>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    {(p.city || p.station) && (
+                      <p className="text-xs text-gray-400">
+                        {[p.city, p.station].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
+                    <SourceBadge source={p.source} votes={p.votes} />
+                  </div>
                 </td>
                 <td className="px-4 py-3 text-right">
                   <span className="text-lg font-bold text-brand-charcoal">
