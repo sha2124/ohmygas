@@ -1,6 +1,11 @@
 /**
- * Fetches the current USD/PHP exchange rate from a free API.
+ * Fetches the current USD/PHP exchange rate.
+ * Tracks previous rate in memory so forecast model can calculate forex impact.
  */
+
+let lastRate: number | null = null;
+let lastFetchedAt: number = 0;
+
 export async function fetchUsdPhp(): Promise<{
   rate: number;
   previousRate: number | null;
@@ -19,13 +24,24 @@ export async function fetchUsdPhp(): Promise<{
   const data = await res.json();
   const rate = data.rates?.PHP;
 
-  if (!rate) {
-    throw new Error("PHP rate not found in response");
+  if (!rate || rate < 40 || rate > 120) {
+    throw new Error("PHP rate not found or out of range in response");
+  }
+
+  // Store previous rate for delta calculation
+  const previousRate = lastRate;
+  const now = Date.now();
+
+  // Only update stored rate if enough time has passed (> 12 hours)
+  // so we get a meaningful delta instead of noise
+  if (now - lastFetchedAt > 12 * 60 * 60 * 1000) {
+    lastRate = rate;
+    lastFetchedAt = now;
   }
 
   return {
     rate,
-    previousRate: null, // free API doesn't provide historical; we'll track over time
+    previousRate,
     source: "open.er-api.com",
   };
 }

@@ -27,6 +27,7 @@ interface PriceData {
   staleWarning: string | null;
   sources: string[];
   communityCount: number;
+  estimatedCount: number;
 }
 
 export function usePrices(): PriceData {
@@ -44,13 +45,11 @@ export function usePrices(): PriceData {
 
   useEffect(() => {
     async function fetchAll() {
-      // Fetch prices and forecast in parallel
       const [pricesRes, forecastRes] = await Promise.allSettled([
         fetch("/api/prices").then((r) => r.ok ? r.json() : Promise.reject(r.status)),
         fetch("/api/forecast").then((r) => r.ok ? r.json() : Promise.reject(r.status)),
       ]);
 
-      // Handle prices
       if (pricesRes.status === "fulfilled") {
         const data = pricesRes.value;
         if (data.prices?.length > 0) {
@@ -58,13 +57,19 @@ export function usePrices(): PriceData {
           const daysSinceUpdate = Math.floor(
             (Date.now() - updatedDate.getTime()) / (1000 * 60 * 60 * 24)
           );
-          if (daysSinceUpdate > 7) {
-            setStaleWarning(
-              `Live source last updated ${data.meta?.updated}. Using estimated prices.`
-            );
-          } else {
+
+          // Always use live data if available, even if stale — don't silently swap to sample data
+          if (data.prices.length > 0) {
             setLiveNCR(data.prices);
-            setIsLive(true);
+            if (daysSinceUpdate <= 7) {
+              setIsLive(true);
+            } else {
+              setStaleWarning(
+                `Live source last updated ${data.meta?.updated}. Prices may be outdated.`
+              );
+              // Still show scraped data, but mark it clearly
+              setIsLive(false);
+            }
           }
           setMeta(data.meta);
         }
@@ -74,7 +79,6 @@ export function usePrices(): PriceData {
         setError("Failed to fetch prices");
       }
 
-      // Handle forecast
       if (forecastRes.status === "fulfilled") {
         const data = forecastRes.value;
         if (data.forecast) setForecast(data.forecast);
@@ -87,13 +91,23 @@ export function usePrices(): PriceData {
     fetchAll();
   }, []);
 
+  // Provincial prices are estimated (sample data) — always tagged
   const provincialPrices = SAMPLE_PRICES.filter((p) => p.region !== "NCR").map(
-    (p) => ({ ...p, source: "scraped" as const })
+    (p) => ({ ...p, source: "estimated" as const })
   );
-  const prices =
-    isLive && liveNCR.length > 0
-      ? [...liveNCR, ...provincialPrices]
-      : SAMPLE_PRICES.map((p) => ({ ...p, source: "scraped" as const }));
 
-  return { prices, meta, forecast, market, history, loading, error, isLive, staleWarning, sources, communityCount };
+  let prices: FuelPrice[];
+  let estimatedCount = 0;
+
+  if (liveNCR.length > 0) {
+    // Live NCR data + estimated provincial
+    prices = [...liveNCR, ...provincialPrices];
+    estimatedCount = provincialPrices.length;
+  } else {
+    // All estimated
+    prices = SAMPLE_PRICES.map((p) => ({ ...p, source: "estimated" as const }));
+    estimatedCount = prices.length;
+  }
+
+  return { prices, meta, forecast, market, history, loading, error, isLive, staleWarning, sources, communityCount, estimatedCount };
 }

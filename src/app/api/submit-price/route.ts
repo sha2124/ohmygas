@@ -98,8 +98,9 @@ export async function PATCH(request: NextRequest) {
 }
 
 async function hashIP(ip: string): Promise<string> {
+  const salt = process.env.IP_HASH_SALT || "ohmygas-default";
   const encoder = new TextEncoder();
-  const data = encoder.encode(ip + "ohmygas-salt-2026");
+  const data = encoder.encode(ip + salt);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");

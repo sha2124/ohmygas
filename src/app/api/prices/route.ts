@@ -28,17 +28,23 @@ export async function GET() {
     }
 
     if (useCache && cachedData) {
-      // Merge cached official data with fresh community data
       const merged = mergePrices(cachedData.prices, crowdPrices);
-      return NextResponse.json({
-        prices: merged,
-        meta: cachedData.meta,
-        history: cachedData.history,
-        sources: cachedData.sources,
-        communityCount: crowdPrices.length,
-        cached: true,
-        cachedAt: new Date(cachedAt).toISOString(),
-      });
+      return NextResponse.json(
+        {
+          prices: merged,
+          meta: cachedData.meta,
+          history: cachedData.history,
+          sources: cachedData.sources,
+          communityCount: crowdPrices.length,
+          cached: true,
+          cachedAt: new Date(cachedAt).toISOString(),
+        },
+        {
+          headers: {
+            "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+          },
+        }
+      );
     }
 
     // Fetch from all scraped sources in parallel
@@ -107,15 +113,22 @@ export async function GET() {
     };
     cachedAt = now;
 
-    return NextResponse.json({
-      prices: merged,
-      meta,
-      history,
-      sources: activeSources,
-      communityCount: crowdPrices.length,
-      cached: false,
-      cachedAt: new Date(now).toISOString(),
-    });
+    return NextResponse.json(
+      {
+        prices: merged,
+        meta,
+        history,
+        sources: activeSources,
+        communityCount: crowdPrices.length,
+        cached: false,
+        cachedAt: new Date(now).toISOString(),
+      },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+        },
+      }
+    );
   } catch (error) {
     console.error("Prices API error:", error);
     return NextResponse.json(

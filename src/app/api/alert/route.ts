@@ -5,7 +5,7 @@ export async function POST(request: Request) {
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -57,7 +57,11 @@ export async function POST(request: Request) {
           ${crudeInfo || forexInfo ? `<p style="font-size:12px;color:#9ca3af;margin:0">${[crudeInfo, forexInfo].filter(Boolean).join(" · ")}</p>` : ""}
         </div>
         <div style="padding:12px 20px;background:#f9fafb;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px">
-          <p style="font-size:11px;color:#9ca3af;margin:0;text-align:center"><a href="https://ohmygas.vercel.app" style="color:#1B7A3D">View all prices</a></p>
+          <p style="font-size:11px;color:#9ca3af;margin:0;text-align:center">
+            <a href="https://ohmygas.vercel.app" style="color:#1B7A3D">View all prices</a>
+            &nbsp;·&nbsp;
+            <a href="https://ohmygas.vercel.app/unsubscribe?email=\${encodeURIComponent(s.email)}" style="color:#9ca3af">Unsubscribe</a>
+          </p>
         </div>
       </div>`;
 

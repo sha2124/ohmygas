@@ -132,11 +132,13 @@ export default function Filters({
         <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-gray-400">
           Fuel Type
         </label>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap" role="radiogroup" aria-label="Fuel type">
           {FUEL_TYPES.map((ft) => (
             <button
               key={ft}
               onClick={() => onFuelTypeChange(ft)}
+              role="radio"
+              aria-checked={selectedFuelType === ft}
               className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                 selectedFuelType === ft
                   ? "bg-brand-green text-white"

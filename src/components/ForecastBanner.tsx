@@ -63,8 +63,8 @@ export default function ForecastBanner({ forecast }: ForecastBannerProps) {
         </div>
       </div>
       <p className="mt-2 text-sm text-gray-700">{actionText}</p>
-      <p className="mt-1 text-[10px] uppercase tracking-wider text-gray-400">
-        Experimental — based on crude oil &amp; forex trends. Actual adjustments may differ.
+      <p className="mt-2 rounded bg-white/50 px-2 py-1 text-[11px] text-gray-500">
+        Forecast based on crude oil &amp; forex trends. Actual DOE adjustments may differ.
       </p>
     </div>
   );

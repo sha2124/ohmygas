@@ -1,4 +1,4 @@
-export type PriceSource = "official" | "scraped" | "community";
+export type PriceSource = "official" | "scraped" | "community" | "estimated";
 
 export interface FuelPrice {
   brand: string;
