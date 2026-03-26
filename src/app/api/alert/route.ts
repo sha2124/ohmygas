@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSupabase } from "@/lib/supabase";
+import { getDb } from "@/lib/db";
 
 export async function POST(request: Request) {
   const authHeader = request.headers.get("authorization");
@@ -18,13 +18,12 @@ export async function POST(request: Request) {
     if (!forecastRes.ok) throw new Error("Failed to fetch forecast");
     const { forecast, market } = await forecastRes.json();
 
-    // Get active subscribers from Supabase
-    const { data: subscribers, error } = await getSupabase()
-      .from("subscribers")
-      .select("email")
-      .eq("active", true);
+    // Get active subscribers
+    const sql = getDb();
+    const subscribers = await sql`
+      SELECT email FROM subscribers WHERE active = true
+    `;
 
-    if (error) throw error;
     if (!subscribers?.length) {
       return NextResponse.json({ message: "No subscribers", sent: 0 });
     }

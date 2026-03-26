@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabase } from "@/lib/supabase";
+import { getDb } from "@/lib/db";
 import { FUEL_TYPES } from "@/lib/types";
 
 export async function POST(request: NextRequest) {
@@ -37,22 +37,21 @@ export async function POST(request: NextRequest) {
     const ip = forwarded?.split(",")[0]?.trim() || "unknown";
     const ipHash = await hashIP(ip);
 
+    const sql = getDb();
+
     // Check if this IP already submitted for this brand/location/fuel in the last hour
-    const supabase = getSupabase();
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const existing = await sql`
+      SELECT id FROM crowd_prices
+      WHERE ip_hash = ${ipHash}
+        AND brand = ${brand}
+        AND fuel_type = ${fuelType}
+        AND region = ${region}
+        AND province = ${province}
+        AND created_at > now() - interval '1 hour'
+      LIMIT 1
+    `;
 
-    const { data: existing } = await supabase
-      .from("crowd_prices")
-      .select("id")
-      .eq("ip_hash", ipHash)
-      .eq("brand", brand)
-      .eq("fuel_type", fuelType)
-      .eq("region", region)
-      .eq("province", province)
-      .gte("created_at", oneHourAgo)
-      .limit(1);
-
-    if (existing && existing.length > 0) {
+    if (existing.length > 0) {
       return NextResponse.json(
         { error: "You already submitted a price for this station recently. Try again later." },
         { status: 429 }
@@ -60,19 +59,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert the submission
-    const { error } = await supabase.from("crowd_prices").insert({
-      brand,
-      station: station || null,
-      region,
-      province,
-      city: city || null,
-      fuel_type: fuelType,
-      price: numPrice,
-      reported_by: reportedBy?.slice(0, 30) || null,
-      ip_hash: ipHash,
-    });
-
-    if (error) throw error;
+    await sql`
+      INSERT INTO crowd_prices (brand, station, region, province, city, fuel_type, price, reported_by, ip_hash)
+      VALUES (${brand}, ${station || null}, ${region}, ${province}, ${city || null}, ${fuelType}, ${numPrice}, ${reportedBy?.slice(0, 30) || null}, ${ipHash})
+    `;
 
     return NextResponse.json({
       message: "Salamat! Your price report has been submitted.",
@@ -95,24 +85,11 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Missing price ID" }, { status: 400 });
     }
 
-    const supabase = getSupabase();
-    const { error } = await supabase.rpc("increment_votes", { price_id: id });
-
-    if (error) {
-      // Fallback: manual increment if RPC not set up
-      const { data } = await supabase
-        .from("crowd_prices")
-        .select("votes")
-        .eq("id", id)
-        .single();
-
-      if (data) {
-        await supabase
-          .from("crowd_prices")
-          .update({ votes: (data.votes || 1) + 1 })
-          .eq("id", id);
-      }
-    }
+    const sql = getDb();
+    await sql`
+      UPDATE crowd_prices SET votes = votes + 1
+      WHERE id = ${id}
+    `;
 
     return NextResponse.json({ message: "Vote recorded" });
   } catch {

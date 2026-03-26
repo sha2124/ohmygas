@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSupabase } from "@/lib/supabase";
+import { getDb } from "@/lib/db";
 
 export async function POST(request: Request) {
   try {
@@ -12,14 +12,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const { error } = await getSupabase()
-      .from("subscribers")
-      .upsert(
-        { email: email.toLowerCase(), active: true },
-        { onConflict: "email" }
-      );
-
-    if (error) throw error;
+    const sql = getDb();
+    await sql`
+      INSERT INTO subscribers (email, active)
+      VALUES (${email.toLowerCase()}, true)
+      ON CONFLICT (email) DO UPDATE SET active = true
+    `;
 
     return NextResponse.json({
       message: "Subscribed! You'll get alerts before Tuesday price changes.",
@@ -37,12 +35,11 @@ export async function DELETE(request: Request) {
   try {
     const { email } = await request.json();
 
-    const { error } = await getSupabase()
-      .from("subscribers")
-      .update({ active: false })
-      .eq("email", email.toLowerCase());
-
-    if (error) throw error;
+    const sql = getDb();
+    await sql`
+      UPDATE subscribers SET active = false
+      WHERE email = ${email.toLowerCase()}
+    `;
 
     return NextResponse.json({ message: "Unsubscribed." });
   } catch {
