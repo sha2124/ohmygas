@@ -20,6 +20,13 @@ function SourceBadge({ source, votes }: { source?: string; votes?: number }) {
   return null;
 }
 
+function TrendArrow({ change }: { change: number | null }) {
+  if (change === null) return null;
+  if (change > 0) return <span className="text-brand-red">↑</span>;
+  if (change < 0) return <span className="text-brand-green">↓</span>;
+  return <span className="text-gray-400">→</span>;
+}
+
 export default function PriceTable({ prices }: PriceTableProps) {
   if (prices.length === 0) {
     return (
@@ -40,7 +47,11 @@ export default function PriceTable({ prices }: PriceTableProps) {
           <tr className="border-b border-gray-100 text-left text-xs font-medium uppercase tracking-wider text-gray-400">
             <th className="px-4 py-3">Brand</th>
             <th className="px-4 py-3 text-right">Price/L</th>
-            <th className="px-4 py-3 text-right">Change</th>
+            <th className="px-4 py-3 text-right">
+              <div className="flex flex-col items-end">
+                <span>vs Last Wk</span>
+              </div>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -81,18 +92,21 @@ export default function PriceTable({ prices }: PriceTableProps) {
                 </td>
                 <td className="px-4 py-3 text-right">
                   {change !== null ? (
-                    <span
-                      className={`text-sm font-medium ${
-                        change > 0
-                          ? "text-brand-red"
-                          : change < 0
-                            ? "text-brand-green"
-                            : "text-gray-400"
-                      }`}
-                    >
-                      {change > 0 ? "+" : ""}
-                      {change.toFixed(2)}
-                    </span>
+                    <div className="flex items-center justify-end gap-1">
+                      <TrendArrow change={change} />
+                      <span
+                        className={`text-sm font-medium ${
+                          change > 0
+                            ? "text-brand-red"
+                            : change < 0
+                              ? "text-brand-green"
+                              : "text-gray-400"
+                        }`}
+                      >
+                        {change > 0 ? "+" : ""}
+                        ₱{Math.abs(change).toFixed(2)}
+                      </span>
+                    </div>
                   ) : (
                     <span className="text-sm text-gray-300">—</span>
                   )}

@@ -8,6 +8,7 @@ import PriceTable from "@/components/PriceTable";
 import PriceHistoryChart from "@/components/PriceHistoryChart";
 import SubscribeForm from "@/components/SubscribeForm";
 import SubmitPriceForm from "@/components/SubmitPriceForm";
+import Resources from "@/components/Resources";
 import { usePrices } from "@/lib/use-prices";
 import { FuelType } from "@/lib/types";
 
@@ -168,6 +169,9 @@ export default function Home() {
 
           {/* Subscribe for alerts */}
           <SubscribeForm />
+
+          {/* Resources */}
+          <Resources />
 
           {/* Footer note */}
           <p className="pb-4 text-center text-xs text-gray-400">
